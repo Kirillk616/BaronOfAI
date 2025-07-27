@@ -33,6 +33,15 @@ fun main() {
         
         // Display some sample data if available
         displaySampleData(parser)
+        
+        // Generate SVG file from the parsed data
+        println("\nGenerating SVG file...")
+        val svgSuccess = parser.generateSvg()
+        if (svgSuccess) {
+            println("SVG generation completed successfully!")
+        } else {
+            println("Failed to generate SVG file.")
+        }
     } else {
         println("\nFailed to parse the WAD file.")
     }
