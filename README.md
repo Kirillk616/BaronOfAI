@@ -1,5 +1,7 @@
 # BaronOfAI
 Classic Doom level generative LLM.
+
+New: Prompt-driven level generator CLI using WadModels.
 Classic Doom, basically (Ultimate/Registered) Doom 1, Doom 2, Final Doom (TNT Evilution and Plutonia) and Doom 64.
 
 I chose Doom, instead of Half-Life (Goldsrc) or even Quake, because true 3D engines are simply too much for the current state gen AI to figure out. By contrast, 2.5D like the Classic Doom engine (id tech 1) is much simpler ,lightweight, and low on usage.
@@ -45,3 +47,21 @@ Make sure that if the player can see outside, they should be able to get there s
 Difficulty should always be fair. Do not put hitscan (troopers, sergeants, chaingun dudes) enemies in far away areas where you cannot see them (cough cough, TNT Map27 Mount Pain)
 
 In general, always place hitscan enemies carefully. Projectile-firing enemies are easier to dodge for pro players.
+
+## Prompt CLI
+
+A new command-line tool reads a text file prompt and generates a minimal DOOM2 level using WadModels.
+
+Build:
+- mvn -Pshade package
+
+Run existing parser demo (default shaded main):
+- java -jar target/WADTool-1.0-SNAPSHOT-all.jar
+
+Run the prompt-based generator (alternate main class from the same fat JAR):
+- java -cp target/WADTool-1.0-SNAPSHOT-all.jar wadtool.PromptLevelGeneratorKt <path-to-prompt.txt> [output.wad]
+  - Example: java -cp target/WADTool-1.0-SNAPSHOT-all.jar wadtool.PromptLevelGeneratorKt prompt.txt WADTool/data/GENAI.WAD
+
+Notes:
+- Prompt processing is wired to a Koog AI adapter stub (KoogPromptProcessor). Replace with a real Koog AI client when available.
+- The generated WAD uses the provided WadModels and WadWriter. Advanced lumps (e.g., NODES, BLOCKMAP) are not currently generated; some engines or tools may need to rebuild them.

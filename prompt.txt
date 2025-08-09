@@ -1,0 +1,15 @@
+# BaronOfAI prompt (basic layout)
+# You can write a short, natural-language description below.
+# The generator scans for a size number and some keywords.
+# Hints:
+# - Include a size number like 256, 384, 512, 1024 (map units)
+# - Lighting keywords: dark, dim, gloom, bright, shiny, sunny
+# - Wall style keywords: tech, base, computer, hell, flesh, gore, stone, ruin, castle
+# - Floor keywords: lava, fire, water, pool
+# - Ceiling keywords: sky, outdoor
+# - Player start direction: north, east, south, west
+# Lines starting with # are ignored by you; they are just guidance for humans.
+
+Tech base starter room, a bit dark with some computer panels.
+Make it 512 units wide. Ceiling open to the sky. There is some water on the floor.
+Player starts facing east.

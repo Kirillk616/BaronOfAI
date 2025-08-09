@@ -1,5 +1,5 @@
 # Specific project files
-/WADTool/data/ATTACK.WAD
+    /WADTool/data/ATTACK.WAD
 /WADTool/data/level.svg
 # Compiled class files
 *.class
