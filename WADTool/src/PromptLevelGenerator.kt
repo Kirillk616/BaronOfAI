@@ -106,42 +106,140 @@ data class LevelSpec(
  * the integration point named after Koog as requested.
  */
 class KoogPromptProcessor {
-    fun process(prompt: String): LevelSpec {
-        // TODO: Replace this stub with actual Koog AI library invocation.
-        // For example:
-        // val client = KoogClient(apiKey)
-        // val result = client.generateLevelSpec(prompt)
-        // return result.toLevelSpec()
+    private val apiKey: String? = System.getenv("OPENAI_API_KEY")
+    private val model: String = System.getenv("KOOG_MODEL") ?: "gpt-4o-mini"
 
-        // Heuristic stub: derive a few properties from keywords/numbers in the prompt.
+    /**
+     * Calls Koog agent connected to OpenAI to transform a natural-language prompt
+     * into a LevelSpec. Falls back to the previous heuristic if no API key is present
+     * or if the call fails for any reason.
+     */
+    fun process(prompt: String): LevelSpec {
+        // If Koog/OpenAI not configured, use fallback heuristic for offline usage.
+        if (apiKey.isNullOrBlank()) {
+            return heuristic(prompt)
+        }
+        return try {
+            // Use Koog Agents with OpenAI provider when available (Gradle build includes Koog DSL).
+            // We avoid complex project-wide wiring and do a minimal inline agent call here.
+            val koogResult = runKoogAgent(prompt)
+            // Validate and clamp values to safe ranges
+            LevelSpec(
+                roomSize = koogResult.roomSize.coerceIn(128, 4096),
+                floorHeight = koogResult.floorHeight.coerceIn(-4096, 4096),
+                ceilingHeight = koogResult.ceilingHeight.coerceIn(0, 8192).let { if (it <= koogResult.floorHeight) koogResult.floorHeight + 64 else it },
+                floorTex = koogResult.floorTex.ifBlank { "FLOOR0_1" },
+                ceilTex = koogResult.ceilTex.ifBlank { "CEIL1_1" },
+                wallTex = koogResult.wallTex.ifBlank { "STARTAN2" },
+                light = koogResult.light.coerceIn(0, 255),
+                playerAngle = ((koogResult.playerAngle % 360) + 360) % 360
+            )
+        } catch (t: Throwable) {
+            println("Warning: Koog/OpenAI call failed: ${t.message}. Falling back to heuristic.")
+            heuristic(prompt)
+        }
+    }
+
+    // Minimal Koog data holder matching LevelSpec fields
+    private data class AiSpec(
+        val roomSize: Int = 384,
+        val floorHeight: Int = 0,
+        val ceilingHeight: Int = 128,
+        val floorTex: String = "FLOOR0_1",
+        val ceilTex: String = "CEIL1_1",
+        val wallTex: String = "STARTAN2",
+        val light: Int = 160,
+        val playerAngle: Int = 0
+    )
+
+    // Executes a Koog agent; tries Koog DSL runner via reflection (Gradle path). Falls back to direct HTTP.
+    private fun runKoogAgent(prompt: String): AiSpec {
+        // Try to use the DSL-based runner if available on the classpath (when built with Gradle Koog DSL sources)
+        try {
+            val runnerClazz = Class.forName("wadtool.KoogAgentDslRunner")
+            val runMethod = runnerClazz.getMethod("run", String::class.java, String::class.java, String::class.java)
+            val json = runMethod.invoke(null, prompt, apiKey, model) as String
+            return parseJsonToAiSpec(json)
+        } catch (_: Throwable) {
+            // ignore and fallback to HTTP below
+        }
+
+        // Koog DSL not available; fallback to direct OpenAI HTTP call with instruction
+        val system = """
+            You are a level spec generator for a DOOM-like map. You must output a strict JSON object
+            with fields: roomSize (int), floorHeight (int), ceilingHeight (int), floorTex (string),
+            ceilTex (string), wallTex (string), light (int 0-255), playerAngle (int degrees).
+            Do not include backticks or any text outside the JSON.
+        """.trimIndent()
+        return openAiHttpCall(system, prompt)
+    }
+
+    // Very small JSON parser tailored for our fields to avoid adding heavy deps beyond Jackson which is already present
+    private fun parseJsonToAiSpec(json: String): AiSpec {
+        try {
+            val mapper = com.fasterxml.jackson.module.kotlin.jacksonObjectMapper()
+            return mapper.readValue(json, AiSpec::class.java)
+        } catch (e: Exception) {
+            throw IllegalArgumentException("Invalid JSON from Koog/OpenAI: ${e.message}")
+        }
+    }
+
+    // Direct HTTP call to OpenAI Chat Completions as a fallback path
+    private fun openAiHttpCall(system: String, prompt: String): AiSpec {
+        val uri = java.net.URI.create("https://api.openai.com/v1/chat/completions")
+        val bodyJson = """
+            {"model":"$model","messages":[
+              {"role":"system","content":${jsonString(system)}},
+              {"role":"user","content":${jsonString("Create a level spec based on this prompt: \"$prompt\". Return ONLY the JSON.")}}
+            ],"temperature":0.2}
+        """.trimIndent()
+        val req = java.net.http.HttpRequest.newBuilder(uri)
+            .header("Authorization", "Bearer $apiKey")
+            .header("Content-Type", "application/json")
+            .POST(java.net.http.HttpRequest.BodyPublishers.ofString(bodyJson))
+            .build()
+        val client = java.net.http.HttpClient.newBuilder()
+            .version(java.net.http.HttpClient.Version.HTTP_1_1)
+            .build()
+        val resp = client.send(req, java.net.http.HttpResponse.BodyHandlers.ofString())
+        if (resp.statusCode() !in 200..299) {
+            throw IllegalStateException("OpenAI HTTP error ${resp.statusCode()}: ${resp.body()}")
+        }
+        // Extract the first message content
+        val mapper = com.fasterxml.jackson.module.kotlin.jacksonObjectMapper()
+        val tree = mapper.readTree(resp.body())
+        val content = tree.path("choices").firstOrNull()?.path("message")?.path("content")?.asText()
+            ?: throw IllegalStateException("OpenAI response missing content")
+        return parseJsonToAiSpec(content.trim())
+    }
+
+    private fun jsonString(text: String): String = com.fasterxml.jackson.module.kotlin.jacksonObjectMapper().writeValueAsString(text)
+
+    // Previous heuristic retained as a fallback/offline mode
+    private fun heuristic(prompt: String): LevelSpec {
         val lower = prompt.lowercase()
         val roomSize = Regex("""(^|\s)([1-9][0-9]{1,3})(\s|$)""")
             .find(lower)?.groupValues?.getOrNull(2)?.toIntOrNull()?.coerceIn(128, 4096) ?: 384
-
         val light = when {
             listOf("dark", "dim", "gloom").any { it in lower } -> 96
             listOf("bright", "shiny", "sunny").any { it in lower } -> 224
             else -> 160
         }
-
         val wallTex = when {
             listOf("tech", "base", "computer").any { it in lower } -> "STARTAN2"
             listOf("hell", "flesh", "gore").any { it in lower } -> "SKINFACE"
             listOf("stone", "ruin", "castle").any { it in lower } -> "STONE2"
             else -> "STARTAN2"
         }
-
         val floorTex = when {
             listOf("lava", "fire").any { it in lower } -> "LAVA1"
             listOf("water", "pool").any { it in lower } -> "FWATER1"
             else -> "FLOOR0_1"
         }
-
         val ceilTex = when {
             listOf("sky", "outdoor").any { it in lower } -> "F_SKY1"
             else -> "CEIL1_1"
         }
-
         val angle = when {
             "north" in lower -> 0
             "east" in lower -> 90
@@ -149,7 +247,6 @@ class KoogPromptProcessor {
             "west" in lower -> 270
             else -> 0
         }
-
         return LevelSpec(
             roomSize = roomSize,
             floorHeight = 0,

@@ -52,16 +52,26 @@ In general, always place hitscan enemies carefully. Projectile-firing enemies ar
 
 A new command-line tool reads a text file prompt and generates a minimal DOOM2 level using WadModels.
 
-Build:
-- mvn -Pshade package
+Build (Gradle):
+- ./gradlew shadowFatJar  (Windows: .\\gradlew.bat shadowFatJar)
 
 Run existing parser demo (default shaded main):
-- java -jar target/WADTool-1.0-SNAPSHOT-all.jar
+- java -jar build\\libs\\BaronOfAI-1.0-SNAPSHOT-all.jar
 
 Run the prompt-based generator (alternate main class from the same fat JAR):
-- java -cp target/WADTool-1.0-SNAPSHOT-all.jar wadtool.PromptLevelGeneratorKt <path-to-prompt.txt> [output.wad]
-  - Example: java -cp target/WADTool-1.0-SNAPSHOT-all.jar wadtool.PromptLevelGeneratorKt prompt.txt WADTool/data/GENAI.WAD
+- java -cp build\\libs\\BaronOfAI-1.0-SNAPSHOT-all.jar wadtool.PromptLevelGeneratorKt <path-to-prompt.txt> [output.wad]
+  - Example: java -cp build\\libs\\BaronOfAI-1.0-SNAPSHOT-all.jar wadtool.PromptLevelGeneratorKt prompt.txt WADTool/data/GENAI.WAD
 
 Notes:
-- Prompt processing is wired to a Koog AI adapter stub (KoogPromptProcessor). Replace with a real Koog AI client when available.
+- Prompt processing is wired to a Koog AI adapter (KoogPromptProcessor). It now calls a Koog agent connected to OpenAI when configured, and falls back to a heuristic offline mode when not.
+- Configure environment variables to enable Koog/OpenAI:
+  - OPENAI_API_KEY: your OpenAI API key (required for online mode)
+  - KOOG_MODEL: optional, defaults to gpt-4o-mini
+- Security: the app reads the API key only from environment variables; no key is stored in files.
+- Failure handling: if the online call fails or returns invalid JSON, the tool logs a warning and continues using the heuristic to produce a valid LevelSpec.
 - The generated WAD uses the provided WadModels and WadWriter. Advanced lumps (e.g., NODES, BLOCKMAP) are not currently generated; some engines or tools may need to rebuild them.
+
+Gradle wrapper:
+- If gradlew/gradlew.bat are not present, run: gradle wrapper --gradle-version 8.9
+  - Windows PowerShell: ./gradlew.bat tasks
+  - Unix/macOS: ./gradlew tasks
