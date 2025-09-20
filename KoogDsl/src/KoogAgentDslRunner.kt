@@ -9,6 +9,7 @@ import ai.koog.agents.core.dsl.extension.nodeLLMRequestStructured
 import ai.koog.prompt.dsl.prompt
 import ai.koog.prompt.executor.clients.openai.OpenAIModels
 import ai.koog.prompt.executor.llms.all.simpleOpenAIExecutor
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import kotlinx.coroutines.runBlocking
 
 fun levelGenerationAgent(apiKey: String): AIAgent<String, LevelBuilder.BuiltLevel> {
@@ -46,7 +47,7 @@ fun levelGenerationAgent(apiKey: String): AIAgent<String, LevelBuilder.BuiltLeve
 
 fun main(): Unit = runBlocking {
     try {
-        val message = "Square room with red walls"
+        val message = "Square room with red walls, blood floor and sky ceiling. Set room light level to 160 (bright indoor lighting). Put the player 1 inside in the center of the room."
         val apiKey = System.getenv("OPENAI_API_KEY")
         if (apiKey.isNullOrBlank()) {
             println("OPENAI_API_KEY is not set. Skipping agent execution. Set the environment variable to run this sample.")
@@ -71,6 +72,13 @@ fun main(): Unit = runBlocking {
             return@runBlocking
         }
         println("WAD written to $outWad")
+
+        // Save level definition as JSON
+        val jsonFile = java.io.File("WADTool\\data\\level_definition.json")
+        jsonFile.parentFile.mkdirs()
+        val json = jacksonObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(built)
+        jsonFile.writeText(json)
+        println("Level definition saved to ${jsonFile.absolutePath}")
 
         val parser = WadParser(outWad)
         if (parser.parse()) {
