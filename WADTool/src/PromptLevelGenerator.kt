@@ -1,6 +1,7 @@
 package wadtool
 
 import java.io.File
+import kotlinx.serialization.Serializable
 
 /**
  * Command-line tool that reads a prompt from a text file and generates
@@ -264,7 +265,9 @@ class KoogPromptProcessor {
  * Constructs a trivial, valid set of WadModels lists from LevelSpec.
  * Creates a single square sector with four walls and a player start.
  */
+
 object LevelBuilder {
+    @Serializable
     data class BuiltLevel(
         val vertexes: List<Vertex>,
         val lineDefs: List<LineDef>,

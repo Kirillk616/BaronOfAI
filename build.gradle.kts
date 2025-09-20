@@ -35,6 +35,9 @@ dependencies {
     implementation("ai.koog:koog-agents:$koogVersion")
     //implementation("ai.koog:providers-openai:$koogVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
+
+    // Kotlinx Serialization runtime for JSON
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
 }
 
 kotlin {

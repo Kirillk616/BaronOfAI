@@ -53,7 +53,7 @@ fun main(): Unit = runBlocking {
             return@runBlocking
         }
         val result = levelGenerationAgent(apiKey).run(message)
-        println(result)
+
     } catch (t: Throwable) {
         // Do not fail the Gradle process with a non-zero exit; print a helpful message instead.
         System.err.println("Doom gen Execution failed: ${t.message}")

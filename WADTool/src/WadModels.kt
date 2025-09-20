@@ -1,5 +1,7 @@
 package wadtool
 
+import kotlinx.serialization.Serializable
+
 /**
  * Models for DOOM/DOOM2 WAD file format structures.
  * These data classes represent the various components found in WAD files.
@@ -9,6 +11,7 @@ package wadtool
  * Represents a vertex in the level geometry.
  * Vertices are 2D points that define the corners of walls and other structures.
  */
+@Serializable
 data class Vertex(
     val x: Short, // X coordinate
     val y: Short  // Y coordinate
@@ -20,6 +23,7 @@ data class Vertex(
  * Represents a linedef, which is a line between two vertices.
  * Linedefs define walls and other boundaries in the level.
  */
+@Serializable
 data class LineDef(
     val startVertex: Int,    // Index of start vertex
     val endVertex: Int,      // Index of end vertex
@@ -36,6 +40,7 @@ data class LineDef(
 /**
  * Represents a sidedef, which defines the texture information for one side of a linedef.
  */
+@Serializable
 data class SideDef(
     val xOffset: Short,         // X offset for texture
     val yOffset: Short,         // Y offset for texture
@@ -52,6 +57,7 @@ data class SideDef(
 /**
  * Represents a sector, which defines a volume in the level with specific properties.
  */
+@Serializable
 data class Sector(
     val floorHeight: Short,     // Floor height
     val ceilingHeight: Short,   // Ceiling height
@@ -69,6 +75,7 @@ data class Sector(
 /**
  * Represents a thing, which is an entity in the level (player start, monster, item, etc.).
  */
+@Serializable
 data class Thing(
     val x: Short,       // X position
     val y: Short,       // Y position
@@ -82,6 +89,7 @@ data class Thing(
 /**
  * Represents a node in the BSP tree used for rendering.
  */
+@Serializable
 data class Node(
     val xPartition: Short,    // X coordinate of partition line start
     val yPartition: Short,    // Y coordinate of partition line start
@@ -107,6 +115,7 @@ data class Node(
 /**
  * Represents a subsector, which is a convex sector fragment.
  */
+@Serializable
 data class SubSector(
     val segCount: Short,  // Number of segs in this subsector
     val firstSeg: Int     // Index of first seg
@@ -117,6 +126,7 @@ data class SubSector(
 /**
  * Represents a seg, which is a line segment that makes up part of a subsector.
  */
+@Serializable
 data class Seg(
     val startVertex: Int,   // Index of start vertex
     val endVertex: Int,     // Index of end vertex
