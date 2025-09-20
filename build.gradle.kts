@@ -1,10 +1,16 @@
+import org.gradle.kotlin.dsl.withType
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
+
 plugins {
-    kotlin("jvm") version "1.9.24"
-    id("com.github.johnrengelman.shadow") version "8.1.1"
+    kotlin("jvm") version "2.1.21"
+    kotlin("plugin.serialization") version "2.1.21"
+    application
 }
 
 group = "com.baronofai"
 version = "1.0-SNAPSHOT"
+val logbackVersion = "1.5.18"
 
 repositories {
     mavenCentral()
@@ -17,18 +23,23 @@ dependencies {
     implementation(kotlin("stdlib"))
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.15.2")
 
+
+    // Logging
+    implementation("org.slf4j:slf4j-api:2.0.9")
+    implementation("ch.qos.logback:logback-classic:$logbackVersion")
+
     // Koog dependencies (align with samples)
     val koogVersion = "0.4.1"
     implementation("ai.koog:agents-core:$koogVersion")
     implementation("ai.koog:agents-tools:$koogVersion")
     implementation("ai.koog:koog-agents:$koogVersion")
-    implementation("ai.koog:providers-openai:$koogVersion")
+    //implementation("ai.koog:providers-openai:$koogVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
 }
 
 kotlin {
     // Use the locally installed JDK 24 to compile and run
-    jvmToolchain(24)
+    jvmToolchain(17)
 }
 
 sourceSets {
@@ -44,8 +55,9 @@ tasks.withType<Jar> {
     }
 }
 
-tasks.register<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowFatJar") {
-    archiveClassifier.set("all")
-    from(sourceSets.main.get().output)
-    configurations = listOf(project.configurations.runtimeClasspath.get())
+tasks.withType<KotlinJvmCompile>().configureEach {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_17)
+    }
 }
+
