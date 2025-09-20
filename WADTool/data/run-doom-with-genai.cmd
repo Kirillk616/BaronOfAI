@@ -1,0 +1,1 @@
+"C:\Program Files (x86)\Steam\steamapps\common\Doom 2\gzdoom\gzdoom.exe" -iwad DOOM2.WAD -file GENAI.WAD +map map01

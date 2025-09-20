@@ -52,7 +52,34 @@ fun main(): Unit = runBlocking {
             println("OPENAI_API_KEY is not set. Skipping agent execution. Set the environment variable to run this sample.")
             return@runBlocking
         }
-        val result = levelGenerationAgent(apiKey).run(message)
+        val built: LevelBuilder.BuiltLevel = levelGenerationAgent(apiKey).run(message)
+
+        val outWad = "WADTool\\data\\GENAI.WAD"
+        val writer = WadWriter(outWad)
+        val wrote = writer.write(
+            built.vertexes,
+            built.lineDefs,
+            built.sideDefs,
+            built.sectors,
+            built.things,
+            built.nodes,
+            built.subSectors,
+            built.segs
+        )
+        if (!wrote) {
+            println("Failed to write WAD to $outWad")
+            return@runBlocking
+        }
+        println("WAD written to $outWad")
+
+        val parser = WadParser(outWad)
+        if (parser.parse()) {
+            val svgOut = "WADTool\\data\\GENAI.svg"
+            val ok = parser.generateSvg(svgOut)
+            if (!ok) println("Failed to generate SVG at $svgOut")
+        } else {
+            println("Parsing generated WAD failed; cannot render SVG")
+        }
 
     } catch (t: Throwable) {
         // Do not fail the Gradle process with a non-zero exit; print a helpful message instead.
