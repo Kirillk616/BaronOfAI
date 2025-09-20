@@ -18,7 +18,7 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.15.2")
 
     // Koog dependencies (align with samples)
-    val koogVersion = "0.4.0"
+    val koogVersion = "0.4.1"
     implementation("ai.koog:agents-core:$koogVersion")
     implementation("ai.koog:agents-tools:$koogVersion")
     implementation("ai.koog:koog-agents:$koogVersion")
@@ -27,7 +27,8 @@ dependencies {
 }
 
 kotlin {
-    jvmToolchain(17)
+    // Use the locally installed JDK 24 to compile and run
+    jvmToolchain(24)
 }
 
 sourceSets {
