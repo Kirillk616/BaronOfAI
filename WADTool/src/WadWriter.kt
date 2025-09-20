@@ -46,38 +46,20 @@ class WadWriter(private val outputPath: String) {
                 // Reserve space for the header (will be written at the end)
                 raf.seek(WAD_HEADER_SIZE.toLong())
                 
-                // Write each data structure and record its directory entry
-                if (vertexes.isNotEmpty()) {
-                    writeVertexes(raf, vertexes)
-                }
-                
-                if (lineDefs.isNotEmpty()) {
-                    writeLineDefs(raf, lineDefs)
-                }
-                
-                if (sideDefs.isNotEmpty()) {
-                    writeSideDefs(raf, sideDefs)
-                }
-                
-                if (sectors.isNotEmpty()) {
-                    writeSectors(raf, sectors)
-                }
-                
-                if (things.isNotEmpty()) {
-                    writeThings(raf, things)
-                }
-                
-                if (nodes.isNotEmpty()) {
-                    writeNodes(raf, nodes)
-                }
-                
-                if (subSectors.isNotEmpty()) {
-                    writeSubSectors(raf, subSectors)
-                }
-                
-                if (segs.isNotEmpty()) {
-                    writeSegs(raf, segs)
-                }
+                // Write map marker lump so engines recognize the level (e.g., MAP01)
+                val mapMarkerPos = raf.filePointer.toInt()
+                addDirectoryEntry("MAP01", mapMarkerPos, 0)
+
+                // Write level lumps in canonical order expected by DOOM engines
+                // Always write lumps, even if empty, so the map is recognized.
+                writeThings(raf, things)
+                writeLineDefs(raf, lineDefs)
+                writeSideDefs(raf, sideDefs)
+                writeVertexes(raf, vertexes)
+                writeSegs(raf, segs)
+                writeSubSectors(raf, subSectors)
+                writeNodes(raf, nodes)
+                writeSectors(raf, sectors)
                 
                 // Record the position of the directory
                 val directoryOffset = raf.filePointer.toInt()
