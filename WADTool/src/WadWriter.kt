@@ -52,7 +52,18 @@ class WadWriter(private val outputPath: String) {
 
                 // Write level lumps in canonical order expected by DOOM engines
                 // Always write lumps, even if empty, so the map is recognized.
-                writeThings(raf, things)
+
+                // Ensure there is at least one Player 1 start (Thing type 1).
+                // Some generation paths may produce no THINGS; GZDoom will refuse to start the map.
+                val ensuredThings = if (things.any { it.type.toInt() == 1 }) {
+                    things
+                } else {
+                    println("[WADWriter] No Player 1 start found; injecting a default one at (0,0).")
+                    val injected = Thing(0, 0, 0, 1, 7)
+                    things + injected
+                }
+
+                writeThings(raf, ensuredThings)
                 writeLineDefs(raf, lineDefs)
                 writeSideDefs(raf, sideDefs)
                 writeVertexes(raf, vertexes)
