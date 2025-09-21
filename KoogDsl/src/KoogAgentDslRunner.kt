@@ -34,7 +34,7 @@ fun levelGenerationAgent(apiKey: String): AIAgent<String, LevelBuilder.BuiltLeve
                         "Produce a strict JSON object. No extra text."
             )
         },
-        model = OpenAIModels.Chat.GPT4o,
+        model = OpenAIModels.Chat.GPT5,
         maxAgentIterations = 50
     )
 
@@ -47,7 +47,9 @@ fun levelGenerationAgent(apiKey: String): AIAgent<String, LevelBuilder.BuiltLeve
 
 fun main(): Unit = runBlocking {
     try {
-        val message = "Square room with red walls, blood floor and sky ceiling. Set room light level to 160 (bright indoor lighting). Put the player 1 inside in the center of the room."
+        val message = "Walmart like building, with one huge room with lot of shelves and 3 smaller rooms connected by doors. " +
+                "Set room light level to 160 (bright indoor lighting). Put the player 1 inside in the center of the room." +
+                "put 4 imps in the corners of the room"
         val apiKey = System.getenv("OPENAI_API_KEY")
         if (apiKey.isNullOrBlank()) {
             println("OPENAI_API_KEY is not set. Skipping agent execution. Set the environment variable to run this sample.")
