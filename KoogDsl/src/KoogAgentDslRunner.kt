@@ -11,6 +11,96 @@ import ai.koog.prompt.executor.clients.openai.OpenAIModels
 import ai.koog.prompt.executor.llms.all.simpleOpenAIExecutor
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import kotlinx.coroutines.runBlocking
+import java.io.File
+
+private fun buildExampleAdvisorFromJson(): String? {
+    // Toggleable via env var
+    val enabled = System.getenv("KOOG_USE_JSON_ADVISOR")?.lowercase()?.let { it == "1" || it == "true" } ?: true
+    if (!enabled) return null
+
+    val dataDir = File("WADTool\\data")
+    if (!dataDir.exists() || !dataDir.isDirectory) return null
+
+    val maxExamples = System.getenv("KOOG_ADVISOR_MAX")?.toIntOrNull() ?: 6
+    val maxTexturesPerExample = System.getenv("KOOG_ADVISOR_TEXTURES")?.toIntOrNull() ?: 12
+    val maxChars = System.getenv("KOOG_ADVISOR_LIMIT")?.toIntOrNull() ?: 6000
+
+    val mapper = jacksonObjectMapper()
+    val summaries = StringBuilder()
+
+    val files = dataDir.listFiles { f -> f.isFile && f.name.startsWith("DOOM2_") && f.name.endsWith(".json") }
+        ?.sortedBy { it.name }
+        ?: emptyList()
+
+    var count = 0
+    for (f in files) {
+        if (count >= maxExamples) break
+        try {
+            val root = mapper.readTree(f)
+            val name = root.path("name").asText(f.nameWithoutExtension)
+            val vertexes = root.path("vertexes").size()
+            val lineDefs = root.path("lineDefs").size()
+            val sectors = root.path("sectors").size()
+            val things = root.path("things").size()
+
+            // Collect frequent textures
+            val textureFreq = mutableMapOf<String, Int>()
+            // From sectors
+            val sectorsNode = root.path("sectors")
+            if (sectorsNode.isArray) {
+                for (sec in sectorsNode) {
+                    val ft = sec.path("floorTex").asText("")
+                    val ct = sec.path("ceilTex").asText("")
+                    if (ft.isNotBlank()) textureFreq[ft] = (textureFreq[ft] ?: 0) + 1
+                    if (ct.isNotBlank()) textureFreq[ct] = (textureFreq[ct] ?: 0) + 1
+                }
+            }
+            // From sideDefs
+            val sidesNode = root.path("sideDefs")
+            if (sidesNode.isArray) {
+                for (sd in sidesNode) {
+                    listOf("upperTex", "lowerTex", "middleTex").forEach { k ->
+                        val tx = sd.path(k).asText("")
+                        if (tx.isNotBlank()) textureFreq[tx] = (textureFreq[tx] ?: 0) + 1
+                    }
+                }
+            }
+            val topTextures = textureFreq.entries
+                .sortedByDescending { it.value }
+                .take(maxTexturesPerExample)
+                .joinToString(", ") { it.key }
+
+            val line = buildString {
+                append("- ")
+                append(name)
+                append(": vertexes=")
+                append(vertexes)
+                append(", lineDefs=")
+                append(lineDefs)
+                append(", sectors=")
+                append(sectors)
+                append(", things=")
+                append(things)
+                if (topTextures.isNotBlank()) {
+                    append(", common_textures=[")
+                    append(topTextures)
+                    append("]")
+                }
+            }
+
+            if (summaries.length + line.length + 1 > maxChars) break
+            summaries.append(line).append('\n')
+            count++
+        } catch (_: Throwable) {
+            // ignore broken files
+        }
+    }
+
+    if (summaries.isEmpty()) return null
+
+    val header = "Reference examples (condensed) from DOOM II maps present in local data. Use them as style/scale guidance; do not copy exact geometry.\n"
+    return header + summaries.toString().trimEnd()
+}
 
 fun levelGenerationAgent(apiKey: String): AIAgent<String, LevelBuilder.BuiltLevel> {
 
@@ -26,6 +116,8 @@ fun levelGenerationAgent(apiKey: String): AIAgent<String, LevelBuilder.BuiltLeve
                     transformed { it.getOrThrow().structure }
         )
     }
+
+    val advisor = buildExampleAdvisorFromJson()
 
     val agentConfig = AIAgentConfig(
         prompt = prompt(id = "doom-level-spec-agent") {
@@ -58,6 +150,9 @@ fun levelGenerationAgent(apiKey: String): AIAgent<String, LevelBuilder.BuiltLeve
                 "Animated textures: FIREBLU1, FIREMAG1, FIRELAV3, NUKEPOIS, SLADRIP1, SLADRIP2, SLADRIP3. " +
                 "Difficulty should always be fair. Do not put hitscan (troopers, sergeants, chaingun dudes) enemies in far away areas where you cannot see them (cough cough, TNT Map27 Mount Pain) " +
                 "In general, always place hitscan enemies carefully. Projectile-firing enemies are easier to dodge for pro players.")
+            if (!advisor.isNullOrBlank()) {
+                system(advisor)
+            }
         },
         model = OpenAIModels.Chat.GPT4_1,
         maxAgentIterations = 50
