@@ -112,7 +112,19 @@ fun main(): Unit = runBlocking {
         if (parser.parse()) {
             val svgOut = "WADTool\\data\\GENAI.svg"
             val ok = parser.generateSvg(svgOut)
-            if (!ok) println("Failed to generate SVG at $svgOut")
+            if (!ok) {
+                println("Failed to generate SVG at $svgOut")
+            } else {
+                // Persist via storage abstraction
+                try {
+                    val svgText = java.io.File(svgOut).readText()
+                    val storage = wadtool.storage.FileLevelStorage()
+                    val id = storage.save(message, java.io.File(outWad), svgText)
+                    println("Saved level to storage with id: $id")
+                } catch (e: Throwable) {
+                    println("Warning: failed to save level to storage: ${e.message}")
+                }
+            }
         } else {
             println("Parsing generated WAD failed; cannot render SVG")
         }
