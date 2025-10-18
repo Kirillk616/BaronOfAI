@@ -38,6 +38,15 @@ dependencies {
 
     // Kotlinx Serialization runtime for JSON
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
+
+    // Ktor server (aligned via BOM to avoid version mismatches)
+    val ktorVersion = "2.3.12"
+    implementation(enforcedPlatform("io.ktor:ktor-bom:$ktorVersion"))
+    implementation("io.ktor:ktor-server-core")
+    implementation("io.ktor:ktor-server-netty")
+    implementation("io.ktor:ktor-server-html-builder")
+    implementation("io.ktor:ktor-server-content-negotiation")
+    implementation("io.ktor:ktor-serialization-jackson")
 }
 
 kotlin {
@@ -56,6 +65,12 @@ tasks.withType<Jar> {
     manifest {
         attributes["Main-Class"] = "wadtool.MainKt"
     }
+}
+
+application {
+    // Allow overriding the main class via -PmainClass=fully.qualified.Name
+    val mainProp = providers.gradleProperty("mainClass").orNull
+    mainClass.set(mainProp ?: "wadtool.web.WebServerKt")
 }
 
 tasks.withType<KotlinJvmCompile>().configureEach {

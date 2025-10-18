@@ -48,30 +48,78 @@ Difficulty should always be fair. Do not put hitscan (troopers, sergeants, chain
 
 In general, always place hitscan enemies carefully. Projectile-firing enemies are easier to dodge for pro players.
 
-## Prompt CLI
+## How to run
 
-A new command-line tool reads a text file prompt and generates a minimal DOOM2 level using WadModels.
+Prerequisites:
+- JDK 17 installed (the project compiles and runs with Java 17)
+- Windows PowerShell or any terminal. The Gradle Wrapper is included, so no separate Gradle install is required
 
-Build (Gradle):
-- ./gradlew shadowFatJar  (Windows: .\\gradlew.bat shadowFatJar)
+Build:
+- Windows: .\\gradlew.bat build
+- macOS/Linux: ./gradlew build
 
-Run existing parser demo (default shaded main):
-- java -jar build\\libs\\BaronOfAI-1.0-SNAPSHOT-all.jar
+Run the Web UI (recommended):
+- This starts a Ktor server with an HTMX UI to browse recent generated levels.
+- Command: .\\gradlew.bat run
+- Then open http://localhost:8080
+- The UI shows a list on the left and an SVG preview + WAD download on the right. Levels are read from WADTool\\data\\levels
 
-Run the prompt-based generator (alternate main class from the same fat JAR):
-- java -cp build\\libs\\BaronOfAI-1.0-SNAPSHOT-all.jar wadtool.PromptLevelGeneratorKt <path-to-prompt.txt> [output.wad]
-  - Example: java -cp build\\libs\\BaronOfAI-1.0-SNAPSHOT-all.jar wadtool.PromptLevelGeneratorKt prompt.txt WADTool/data/GENAI.WAD
+Generate a level with the Koog agent (optional, requires OpenAI):
+- Set your OpenAI key in the environment before running:
+  - Windows PowerShell: $Env:OPENAI_API_KEY = "sk-..."
+  - Command: .\\gradlew.bat run -PmainClass=wadtool.KoogAgentDslRunnerKt
+  - The agent uses a hardcoded example prompt for now, writes GENAI.WAD + GENAI.svg to WADTool\\data, and also saves into WADTool\\data\\levels so it appears in the Web UI list.
+- If OPENAI_API_KEY is not set, the agent sample prints a message and exits without error.
+
+Run the classic parser demo (reads ATTACK.WAD and regenerates it):
+- Command: .\\gradlew.bat run -PmainClass=wadtool.MainKt
+- Outputs a summary, an SVG, and writes WADTool\\data\\ATTACK_GEN.WAD
+
+Run the prompt-based generator CLI directly:
+- Command: .\\gradlew.bat run -PmainClass=wadtool.PromptLevelGeneratorKt --args="prompt.txt WADTool\\data\\GENAI.WAD"
+- You can omit the output path to use the default
+
+Where files are stored:
+- Generated artifacts: WADTool\\data (e.g., GENAI.WAD, GENAI.svg)
+- Persisted recent levels (used by the Web UI): WADTool\\data\\levels\\<level-id> with files: prompt.txt, map.svg, map.wad, created.txt
+
+Launch Doom with the generated WAD (optional):
+- See WADTool\\data\\run-doom-with-genai.cmd as a starting point and adjust paths for your Doom source port.
 
 Notes:
-- Prompt processing is wired to a Koog AI adapter (KoogPromptProcessor). It now calls a Koog agent connected to OpenAI when configured, and falls back to a heuristic offline mode when not.
-- Configure environment variables to enable Koog/OpenAI:
-  - OPENAI_API_KEY: your OpenAI API key (required for online mode)
-  - KOOG_MODEL: optional, defaults to gpt-4o-mini
-- Security: the app reads the API key only from environment variables; no key is stored in files.
-- Failure handling: if the online call fails or returns invalid JSON, the tool logs a warning and continues using the heuristic to produce a valid LevelSpec.
-- The generated WAD uses the provided WadModels and WadWriter. Advanced lumps (e.g., NODES, BLOCKMAP) are not currently generated; some engines or tools may need to rebuild them.
+- OPENAI_API_KEY is only read from the environment; no keys are stored in the repo.
+- The storage abstraction is file-based now and can later be swapped with S3.
 
 Gradle wrapper:
-- If gradlew/gradlew.bat are not present, run: gradle wrapper --gradle-version 8.9
-  - Windows PowerShell: ./gradlew.bat tasks
+- If gradlew/gradlew.bat are missing, run: gradle wrapper --gradle-version 8.9
+  - Windows PowerShell: .\\gradlew.bat tasks
   - Unix/macOS: ./gradlew tasks
+
+
+## Run from IntelliJ IDEA
+
+You can start the Ktor webserver directly from IntelliJ without using the terminal.
+
+Option A — Use the provided Run Configuration (easiest):
+- Open the project in IntelliJ IDEA and let it import the Gradle build.
+- Make sure Project SDK is set to JDK 17 (File > Project Structure > Project > SDK: 17).
+- In the Run/Debug configurations dropdown (top-right), choose: Run Web UI (Ktor).
+- Click Run. Gradle will build and start the server.
+- Open http://localhost:8080 in your browser.
+
+Option B — Run via Gradle tool window:
+- Open the Gradle tool window (View > Tool Windows > Gradle).
+- Expand Tasks > application.
+- Double-click run. This runs the Gradle task which is already configured to start wadtool.web.WebServerKt.
+
+Option C — Create an IntelliJ Application configuration manually:
+- Run > Edit Configurations… > + > Kotlin.
+- Name: WebServer (Ktor)
+- Main class: wadtool.web.WebServerKt
+- Use classpath of module: select the Gradle module for this project (after import).
+- JRE: 17
+- Apply and Run.
+
+Notes:
+- The server binds to port 8080 by default (see WADTool/src/web/WebServer.kt). Change the port in that file if needed.
+- Recent levels are read from WADTool\data\levels. If empty, the UI will show a helper message until you generate a level.

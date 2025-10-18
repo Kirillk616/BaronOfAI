@@ -30,13 +30,13 @@ set DIRNAME=%~dp0
 if "%DIRNAME%"=="" set DIRNAME=.
 @rem This is normally unused
 set APP_BASE_NAME=%~n0
-set APP_HOME=%DIRNAME%
+set APP_HOME=%DIRNAME%..
 
 @rem Resolve any "." and ".." in APP_HOME to make it shorter.
 for %%i in ("%APP_HOME%") do set APP_HOME=%%~fi
 
 @rem Add default JVM options here. You can also use JAVA_OPTS and GRADLE_OPTS to pass JVM options to this script.
-set DEFAULT_JVM_OPTS="-Xmx64m" "-Xms64m"
+set DEFAULT_JVM_OPTS="-Xmx64m" "-Xms64m" "-javaagent:%APP_HOME%/lib/agents/gradle-instrumentation-agent-8.14.jar"
 
 @rem Find java.exe
 if defined JAVA_HOME goto findJavaFromJavaHome
@@ -73,29 +73,8 @@ goto fail
 set CLASSPATH=
 
 
-@rem Ensure Gradle wrapper JAR exists (auto-download if missing)
-set WRAPPER_JAR=%APP_HOME%\gradle\wrapper\gradle-wrapper.jar
-if not exist "%WRAPPER_JAR%" (
-    echo Gradle wrapper JAR not found. Downloading gradle-wrapper-8.14.jar...
-    if not exist "%APP_HOME%\gradle\wrapper" mkdir "%APP_HOME%\gradle\wrapper"
-    powershell -NoProfile -ExecutionPolicy Bypass -Command "try { Invoke-WebRequest -UseBasicParsing -Uri 'https://repo1.maven.org/maven2/org/gradle/gradle-wrapper/8.14/gradle-wrapper-8.14.jar' -OutFile '%WRAPPER_JAR%'; exit 0 } catch { Write-Host $_.Exception.Message; exit 1 }"
-    if not exist "%WRAPPER_JAR%" (
-        echo ERROR: Failed to download Gradle wrapper JAR. 1>&2
-        echo Attempting fallback: download Gradle distribution and run directly...
-        for /f "usebackq delims=" %%i in (`powershell -NoProfile -ExecutionPolicy Bypass -Command "$props = Get-Content -Raw '%APP_HOME%\gradle\wrapper\gradle-wrapper.properties'; if ($props -match 'distributionUrl=(.+)') { $u = $Matches[1] -replace '\\:', ':'; $zip = '%APP_HOME%\gradle\wrapper\gradle-dist.zip'; try { Invoke-WebRequest -UseBasicParsing -Uri $u -OutFile $zip } catch { Write-Host $_.Exception.Message; exit 1 }; try { Expand-Archive -Path $zip -DestinationPath '%APP_HOME%\gradle\wrapper' -Force } catch {}; $folder = Get-ChildItem '%APP_HOME%\gradle\wrapper' -Directory | Where-Object { $_.Name -like 'gradle-*' } | Select-Object -First 1; if ($folder) { $exe = Join-Path $folder.FullName 'bin\gradle.bat'; if (Test-Path $exe) { Write-Output $exe } } }"`) do set GRADLE_FALLBACK_EXE=%%i
-        if not defined GRADLE_FALLBACK_EXE (
-            echo Fallback failed. Could not prepare Gradle distribution. 1>&2
-            goto fail
-        )
-    )
-)
-
 @rem Execute Gradle
-if defined GRADLE_FALLBACK_EXE (
-    call "%GRADLE_FALLBACK_EXE%" %*
-) else (
-    "%JAVA_EXE%" %DEFAULT_JVM_OPTS% %JAVA_OPTS% %GRADLE_OPTS% "-Dorg.gradle.appname=%APP_BASE_NAME%" -classpath "%CLASSPATH%" -jar "%WRAPPER_JAR%" %*
-)
+"%JAVA_EXE%" %DEFAULT_JVM_OPTS% %JAVA_OPTS% %GRADLE_OPTS% "-Dorg.gradle.appname=%APP_BASE_NAME%" -classpath "%CLASSPATH%" -jar "%APP_HOME%\lib\gradle-gradle-cli-main-8.14.jar" %*
 
 :end
 @rem End local scope for the variables with windows NT shell
