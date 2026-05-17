@@ -2,7 +2,7 @@ package wadtool
 
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.config.AIAgentConfig
-import ai.koog.agents.core.agent.entity.AIAgentStrategy
+import ai.koog.agents.core.agent.entity.AIAgentGraphStrategy
 import ai.koog.agents.core.dsl.builder.forwardTo
 import ai.koog.agents.core.dsl.builder.strategy
 import ai.koog.agents.core.dsl.extension.nodeLLMRequestStructured
@@ -104,17 +104,13 @@ private fun buildExampleAdvisorFromJson(): String? {
 
 fun levelGenerationAgent(apiKey: String): AIAgent<String, LevelBuilder.BuiltLevel> {
 
-    val strategy: AIAgentStrategy<String, LevelBuilder.BuiltLevel> = strategy("doom-level-spec-agent") {
+    val strategy: AIAgentGraphStrategy<String, LevelBuilder.BuiltLevel> = strategy("doom-level-spec-agent") {
         val specNode by nodeLLMRequestStructured<LevelBuilder.BuiltLevel>(
             name = "Generate LevelSpec JSON",
             //examples = listOf(listOf(DslAiSpec()))
-        )
+        ).transform<LevelBuilder.BuiltLevel> { it.getOrThrow().data }
         edge(nodeStart forwardTo specNode)
-        edge(
-            specNode forwardTo nodeFinish
-                    onCondition { it.isSuccess }
-                    transformed { it.getOrThrow().structure }
-        )
+        edge(specNode forwardTo nodeFinish)
     }
 
     val advisor = buildExampleAdvisorFromJson()

@@ -3,8 +3,8 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
 plugins {
-    kotlin("jvm") version "2.1.21"
-    kotlin("plugin.serialization") version "2.1.21"
+    kotlin("jvm") version "2.3.10"
+    kotlin("plugin.serialization") version "2.3.10"
     application
 }
 
@@ -29,24 +29,31 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
 
     // Koog dependencies (align with samples)
-    val koogVersion = "0.4.1"
+    val koogVersion = "0.7.3"
     implementation("ai.koog:agents-core:$koogVersion")
     implementation("ai.koog:agents-tools:$koogVersion")
     implementation("ai.koog:koog-agents:$koogVersion")
     //implementation("ai.koog:providers-openai:$koogVersion")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
 
     // Kotlinx Serialization runtime for JSON
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.10.0")
 
-    // Ktor server (aligned via BOM to avoid version mismatches)
-    val ktorVersion = "2.3.12"
+    // Ktor (aligned via BOM to avoid version mismatches)
+    val ktorVersion = "3.2.2"
     implementation(enforcedPlatform("io.ktor:ktor-bom:$ktorVersion"))
+    // Server
     implementation("io.ktor:ktor-server-core")
     implementation("io.ktor:ktor-server-netty")
     implementation("io.ktor:ktor-server-html-builder")
     implementation("io.ktor:ktor-server-content-negotiation")
     implementation("io.ktor:ktor-serialization-jackson")
+    // Client (needed by Koog/OpenAI executor; fixes ClassNotFound: io.ktor.client.plugins.sse.SSEKt)
+    implementation("io.ktor:ktor-client-core")
+    implementation("io.ktor:ktor-client-cio")
+    implementation("io.ktor:ktor-client-content-negotiation")
+    implementation("io.ktor:ktor-client-json")
+    implementation("io.ktor:ktor-client-jackson")
 }
 
 kotlin {
