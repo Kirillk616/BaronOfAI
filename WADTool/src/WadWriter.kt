@@ -71,6 +71,8 @@ class WadWriter(private val outputPath: String) {
                 writeSubSectors(raf, subSectors)
                 writeNodes(raf, nodes)
                 writeSectors(raf, sectors)
+                writeReject(raf, sectors.size)
+                writeBlockMap(raf, vertexes, lineDefs)
                 
                 // Record the position of the directory
                 val directoryOffset = raf.filePointer.toInt()
@@ -267,6 +269,61 @@ class WadWriter(private val outputPath: String) {
         
         // Add directory entry
         addDirectoryEntry("SECTORS", filePos, totalSize)
+    }
+
+    /**
+     * Write a conservative REJECT table.
+     *
+     * A zero bit means "line of sight may be possible". This is larger than an
+     * optimized table, but it is valid and keeps classic engines from reading
+     * past the expected map lump sequence.
+     */
+    private fun writeReject(raf: RandomAccessFile, sectorCount: Int) {
+        val filePos = raf.filePointer.toInt()
+        val totalSize = ((sectorCount * sectorCount) + 7) / 8
+        raf.write(ByteArray(totalSize))
+
+        addDirectoryEntry("REJECT", filePos, totalSize)
+    }
+
+    /**
+     * Write a simple BLOCKMAP where each map block shares one list containing
+     * all linedefs. It is intentionally conservative: collision checks may scan
+     * more lines than needed, but PrBoom gets a structurally valid blockmap.
+     */
+    private fun writeBlockMap(raf: RandomAccessFile, vertexes: List<Vertex>, lineDefs: List<LineDef>) {
+        val filePos = raf.filePointer.toInt()
+        val blockSize = 128
+        val minX = vertexes.minOfOrNull { it.x.toInt() } ?: 0
+        val minY = vertexes.minOfOrNull { it.y.toInt() } ?: 0
+        val maxX = vertexes.maxOfOrNull { it.x.toInt() } ?: 0
+        val maxY = vertexes.maxOfOrNull { it.y.toInt() } ?: 0
+        val originX = Math.floorDiv(minX, blockSize) * blockSize
+        val originY = Math.floorDiv(minY, blockSize) * blockSize
+        val columns = ((maxX - originX) / blockSize + 1).coerceAtLeast(1)
+        val rows = ((maxY - originY) / blockSize + 1).coerceAtLeast(1)
+        val blockCount = columns * rows
+        val sharedListOffset = 4 + blockCount
+        val listWordCount = lineDefs.size + 1
+        val totalWords = sharedListOffset + listWordCount
+
+        val buffer = ByteBuffer.allocate(totalWords * 2).order(ByteOrder.LITTLE_ENDIAN)
+        buffer.putShort(originX.toShort())
+        buffer.putShort(originY.toShort())
+        buffer.putShort(columns.toShort())
+        buffer.putShort(rows.toShort())
+        repeat(blockCount) {
+            buffer.putShort(sharedListOffset.toShort())
+        }
+        lineDefs.indices.forEach { index ->
+            buffer.putShort(index.toShort())
+        }
+        buffer.putShort((-1).toShort())
+
+        buffer.flip()
+        raf.write(buffer.array())
+
+        addDirectoryEntry("BLOCKMAP", filePos, totalWords * 2)
     }
     
     /**

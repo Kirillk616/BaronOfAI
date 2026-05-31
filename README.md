@@ -79,6 +79,18 @@ Run the prompt-based generator CLI directly:
 - Command: .\\gradlew.bat run -PmainClass=wadtool.PromptLevelGeneratorKt --args="prompt.txt WADTool\\data\\GENAI.WAD"
 - You can omit the output path to use the default
 
+Generate a starter agent map plan:
+- Command: .\\gradlew.bat "-PmainClass=wadtool.agent.AgentMapPlanGeneratorKt" run "--args=prompt.txt WADTool\\data\\map_plan.json WADTool\\data\\AGENT_GEN.WAD"
+- This runs the root orchestrator, topology agent, connector/door agent, room layout agent, map-plan validator, and deterministic MapPlan compiler.
+- The output is a JSON MapPlan, a compiled multi-room WAD, and an SVG preview.
+
+Play a generated level in the browser:
+- Open the Web UI, select a saved level, then click Play in Browser.
+- The player page expects webDOOM runtime files under WADTool\\data\\webdoom: doom2.js, doom2.wasm, and doom2.data.
+- Local setup command:
+  - PowerShell: New-Item -ItemType Directory -Force WADTool\\data\\webdoom; Invoke-WebRequest https://raw.githubusercontent.com/UstymUkhman/WebDOOM/master/public/doom2.js -OutFile WADTool\\data\\webdoom\\doom2.js; Invoke-WebRequest https://raw.githubusercontent.com/UstymUkhman/WebDOOM/master/public/doom2.wasm -OutFile WADTool\\data\\webdoom\\doom2.wasm; Invoke-WebRequest https://raw.githubusercontent.com/UstymUkhman/WebDOOM/master/public/doom2.data -OutFile WADTool\\data\\webdoom\\doom2.data
+- Do not commit IWAD/runtime bundles. For redistributable use, build or provide a Freedoom-compatible webDOOM data bundle instead of commercial Doom assets.
+
 Where files are stored:
 - Generated artifacts: WADTool\\data (e.g., GENAI.WAD, GENAI.svg)
 - Persisted recent levels (used by the Web UI): WADTool\\data\\levels\\<level-id> with files: prompt.txt, map.svg, map.wad, created.txt

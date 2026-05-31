@@ -276,7 +276,8 @@ object LevelBuilder {
         val things: List<Thing>,
         val nodes: List<Node>,
         val subSectors: List<SubSector>,
-        val segs: List<Seg>
+        val segs: List<Seg>,
+        val annotations: List<MapAnnotation> = emptyList()
     )
 
     fun fromSpec(spec: LevelSpec): BuiltLevel {
@@ -327,3 +328,11 @@ object LevelBuilder {
         return BuiltLevel(vertexes, lineDefs, sideDefs, sectors, things, nodes, subSectors, segs)
     }
 }
+
+@Serializable
+data class MapAnnotation(
+    val text: String,
+    val x: Int,
+    val y: Int,
+    val title: String = ""
+)

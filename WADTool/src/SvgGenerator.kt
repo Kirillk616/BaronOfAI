@@ -8,9 +8,10 @@ import java.io.File
  * responsibilities separated from parsing logic while preserving the same call site.
  *
  * @param outputPath The path where the SVG file should be saved. If null, saves to "WADTool/data/level.svg"
+ * @param annotations Optional map-space labels to draw on top of the geometry.
  * @return True if the SVG was generated successfully, false otherwise
  */
-fun WadParser.generateSvg(outputPath: String? = null): Boolean {
+fun WadParser.generateSvg(outputPath: String? = null, annotations: List<MapAnnotation> = emptyList()): Boolean {
     if (vertexes.isEmpty() || lineDefs.isEmpty()) {
         println("Cannot generate SVG: No vertices or linedefs found")
         return false
@@ -90,6 +91,20 @@ fun WadParser.generateSvg(outputPath: String? = null): Boolean {
             }
         }
 
+        // Add room reference labels from the agent/compiler layer.
+        annotations.forEach { annotation ->
+            val title = annotation.title.ifBlank { "Room ${annotation.text}" }
+            svgBuilder.append(
+                """
+                    <g>
+                      <title>${title.xmlEscape()}</title>
+                      <circle cx="${annotation.x}" cy="${-annotation.y}" r="${22/scale}" fill="#101820" stroke="#FFD54A" stroke-width="${3/scale}"/>
+                      <text x="${annotation.x}" y="${-annotation.y}" fill="#FFD54A" font-family="Arial, sans-serif" font-size="${24/scale}" font-weight="700" text-anchor="middle" dominant-baseline="central">${annotation.text.xmlEscape()}</text>
+                    </g>
+                """.trimIndent()
+            )
+        }
+
         // Close SVG
         svgBuilder.append(
             """
@@ -110,3 +125,10 @@ fun WadParser.generateSvg(outputPath: String? = null): Boolean {
         false
     }
 }
+
+private fun String.xmlEscape(): String =
+    replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace("\"", "&quot;")
+        .replace("'", "&apos;")
