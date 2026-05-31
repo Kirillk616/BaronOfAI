@@ -8,11 +8,19 @@
     "generate:plan": "npm run build && node dist/agent/generateMapPlan.js",
     "generate:compiled": "npm run build && node dist/agent/generateCompiledLevel.js",
     "generate:wad": "npm run build && node dist/agent/generateWad.js",
+    "prompt:generate": "npm run build && node dist/tools/promptLevelGenerator.js",
+    "server:start": "npm run build && node dist/server/webServer.js",
+    "wad:main": "npm run build && node dist/tools/mainDemo.js",
+    "wad:read": "npm run build && node dist/tools/wadReaderCli.js",
     "electron:start": "electron electron/main.mjs"
   },
   "devDependencies": {
+    "@types/express": "^4.17.23",
     "@types/node": "^25.9.1",
     "electron": "^31.7.7",
     "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
   }
 }

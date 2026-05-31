@@ -1,9 +1,9 @@
 :root {
-  --bg: #1a232c;
-  --panel: #243441;
-  --panel-border: #3c5367;
-  --text: #ffffff;
-  --muted: #e2ebf3;
+  --bg: #25374a;
+  --panel: #31465a;
+  --panel-border: #4f667d;
+  --text: #f7fbff;
+  --muted: #ebf2f9;
   --accent: #35b4a8;
   --accent-2: #2a8f86;
 }
@@ -56,7 +56,7 @@ textarea {
   resize: vertical;
   border: 1px solid #506980;
   border-radius: 6px;
-  background: #18232c;
+  background: #22313f;
   color: #f2f7fb;
   padding: 10px;
   font: 13px/1.5 Consolas, "Courier New", monospace;
@@ -104,7 +104,7 @@ button.secondary:hover {
 .levels-wrap {
   border: 1px solid #4e667e;
   border-radius: 6px;
-  background: #17222b;
+  background: #22313f;
   overflow: hidden;
 }
 
@@ -125,7 +125,7 @@ button.secondary:hover {
   border: 0;
   border-bottom: 1px solid #42596e;
   text-align: left;
-  background: #1a2732;
+  background: #28394a;
   color: #e5eef7;
   padding: 8px 10px;
   cursor: pointer;
@@ -161,7 +161,7 @@ button.secondary:hover {
   min-height: 120px;
   border: 1px solid #506980;
   border-radius: 6px;
-  background: #18232c;
+  background: #243647;
   padding: 10px;
   overflow: auto;
   color: #f3f8fd;
@@ -184,7 +184,12 @@ iframe {
   height: 100%;
   border: 1px solid #4e667b;
   border-radius: 6px;
-  background: #0c1014;
+  background: #1b2a37;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.75;
 }
 
 @media (max-width: 1000px) {

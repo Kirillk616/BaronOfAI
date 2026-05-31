@@ -13,8 +13,6 @@ const compiledPath = resolve(repoRoot, "WADTool", "data", "compiled_level.ts.jso
 const svgPath = resolve(repoRoot, "WADTool", "data", "AGENT_TS.svg");
 const levelsRoot = resolve(repoRoot, "WADTool", "data", "levels");
 const baseUrl = "http://127.0.0.1:8080";
-const gradleRunnerPath = resolve(repoRoot, "gradle", "wrapper", "gradle-8.14", "bin", "gradle.bat");
-const localJavaHome = resolve(repoRoot, ".tools", "corretto-24", "jdk24.0.2_12");
 
 let mainWindow = null;
 let serverProcessPid = null;
@@ -78,18 +76,22 @@ ipcMain.handle("app:startServer", async () => {
     return { ok: true, alreadyRunning: true, pid: null };
   }
 
-  const env = { ...process.env };
-  if (!env.JAVA_HOME) {
-    env.JAVA_HOME = localJavaHome;
-    env.Path = `${join(localJavaHome, "bin")};${env.Path ?? ""}`;
+  const tscPath = resolve(tsRoot, "node_modules", "typescript", "lib", "tsc.js");
+  const buildResult = await runProcess(process.execPath, [tscPath, "-p", "tsconfig.json"], { cwd: tsRoot });
+  if (buildResult.code !== 0) {
+    return {
+      ok: false,
+      error: buildResult.stderr || buildResult.stdout || "TypeScript build failed.",
+    };
   }
 
-  const child = spawn(gradleRunnerPath, ["--no-daemon", "run"], {
-    cwd: repoRoot,
+  const serverScriptPath = resolve(tsRoot, "dist", "server", "webServer.js");
+  const child = spawn(process.execPath, [serverScriptPath], {
+    cwd: tsRoot,
     detached: true,
     windowsHide: true,
     stdio: "ignore",
-    env,
+    env: sanitizeEnvForWindows(process.env),
   });
   child.unref();
   serverProcessPid = child.pid ?? null;

@@ -20,6 +20,15 @@ function api() {
   return window.baronApp;
 }
 
+function requireApiMethod(name) {
+  const bridge = api();
+  const fn = bridge?.[name];
+  if (typeof fn !== "function") {
+    throw new Error(`Desktop bridge method missing: ${name}. Close old Electron windows and start the latest app.`);
+  }
+  return fn.bind(bridge);
+}
+
 function setLog(text) {
   logEl.textContent = text;
   logEl.scrollTop = logEl.scrollHeight;
@@ -27,8 +36,7 @@ function setLog(text) {
 
 async function loadInitial() {
   try {
-    const bridge = api();
-    const prompt = await bridge.getInitialPrompt();
+    const prompt = await requireApiMethod("getInitialPrompt")();
     promptEl.value = prompt;
   } catch (error) {
     setLog(`Failed to load prompt: ${String(error)}`);
@@ -38,7 +46,7 @@ async function loadInitial() {
 }
 
 async function refreshServerStatus() {
-  const status = await api().getServerStatus();
+  const status = await requireApiMethod("getServerStatus")();
   if (status.ok) {
     serverStatusEl.textContent = `Online (${status.status})`;
     serverStatusEl.style.color = "#6de1a8";
@@ -49,7 +57,7 @@ async function refreshServerStatus() {
 }
 
 async function refreshLevels() {
-  const result = await api().listLevels();
+  const result = await requireApiMethod("listLevels")();
   if (!result.ok) {
     levelsListEl.innerHTML = `<div class="level-item muted">Failed to load levels.</div>`;
     return;
@@ -87,7 +95,7 @@ async function generateAndPlay() {
   generateBtn.disabled = true;
   setLog("Running TypeScript pipeline...");
   try {
-    const result = await api().generateLevel(promptEl.value);
+    const result = await requireApiMethod("generateLevel")(promptEl.value);
     if (!result.ok) {
       setLog(result.error || "Generation failed.");
       return;
@@ -107,7 +115,7 @@ async function startServer() {
   startServerBtn.disabled = true;
   setLog("Starting backend server...");
   try {
-    const result = await api().startServer();
+    const result = await requireApiMethod("startServer")();
     if (!result.ok) {
       setLog(result.error || "Failed to start server.");
       return;
