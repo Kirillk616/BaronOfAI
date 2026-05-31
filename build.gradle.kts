@@ -58,7 +58,7 @@ dependencies {
 
 kotlin {
     // Use the locally installed JDK 24 to compile and run
-    jvmToolchain(17)
+    jvmToolchain(24)
 }
 
 sourceSets {
@@ -82,7 +82,7 @@ application {
 
 tasks.withType<KotlinJvmCompile>().configureEach {
     compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_17)
+        jvmTarget.set(JvmTarget.JVM_24)
     }
 }
 
