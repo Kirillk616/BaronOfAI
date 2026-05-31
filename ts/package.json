@@ -1,0 +1,18 @@
+{
+  "name": "baronofai-ts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "generate:plan": "npm run build && node dist/agent/generateMapPlan.js",
+    "generate:compiled": "npm run build && node dist/agent/generateCompiledLevel.js",
+    "generate:wad": "npm run build && node dist/agent/generateWad.js",
+    "electron:start": "electron electron/main.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "electron": "^31.7.7",
+    "typescript": "^5.9.2"
+  }
+}

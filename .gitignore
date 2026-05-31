@@ -70,10 +70,17 @@ Thumbs.db
 /WADTool/data/GENAI.WAD
 /WADTool/data/AGENT_GEN.svg
 /WADTool/data/AGENT_GEN.WAD
+/WADTool/data/AGENT_TS.svg
+/WADTool/data/AGENT_TS.WAD
 /WADTool/data/WALMART_AGENT.svg
 /WADTool/data/WALMART_AGENT.WAD
 /WADTool/data/level_definition.json
+/WADTool/data/prompt.electron.txt
 /WADTool/data/levels/
 /WADTool/data/map_plan.json
+/WADTool/data/map_plan.ts.json
+/WADTool/data/compiled_level.ts.json
 /WADTool/data/walmart_map_plan.json
 /WADTool/data/webdoom/
+ts/node_modules/
+ts/dist/

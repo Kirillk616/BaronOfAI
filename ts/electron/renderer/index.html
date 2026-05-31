@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BaronOfAI Editor Shell</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <aside class="panel">
+        <h1>BaronOfAI</h1>
+        <p class="subtitle">Prompt-steered map generation with in-app play preview</p>
+
+        <label for="prompt">Prompt</label>
+        <textarea id="prompt" spellcheck="false"></textarea>
+
+        <div class="controls">
+          <button id="generateBtn">Generate + Play</button>
+          <button id="startServerBtn" class="secondary">Start Server</button>
+          <button id="refreshBtn" class="secondary">Refresh Preview</button>
+        </div>
+
+        <div class="status">
+          <div>Server: <span id="serverStatus">Checking...</span></div>
+          <div>Level: <span id="levelStatus">None yet</span></div>
+        </div>
+
+        <div class="levels-wrap">
+          <div class="levels-title">Recent Levels</div>
+          <div id="levelsList" class="levels-list"></div>
+        </div>
+
+        <pre id="log" class="log"></pre>
+      </aside>
+
+      <main class="preview">
+        <div class="preview-grid">
+          <iframe id="playerFrame" title="Map Preview" src="http://127.0.0.1:8080"></iframe>
+          <iframe id="svgFrame" title="SVG Preview" src="http://127.0.0.1:8080"></iframe>
+        </div>
+      </main>
+    </div>
+
+    <script type="module" src="./renderer.mjs"></script>
+  </body>
+</html>
