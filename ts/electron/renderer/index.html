@@ -35,9 +35,12 @@
       </aside>
 
       <main class="preview">
-        <div class="preview-grid">
-          <iframe id="playerFrame" title="Map Preview" src="http://127.0.0.1:8080"></iframe>
-          <iframe id="svgFrame" title="SVG Preview" src="http://127.0.0.1:8080"></iframe>
+        <div class="preview-shell">
+          <div class="preview-toolbar">
+            <button id="playModeBtn" class="mode active" type="button">Play</button>
+            <button id="svgModeBtn" class="mode" type="button">SVG</button>
+          </div>
+          <iframe id="playerFrame" title="Map Preview"></iframe>
         </div>
       </main>
     </div>

@@ -7,11 +7,13 @@ const levelStatusEl = document.getElementById("levelStatus");
 const levelsListEl = document.getElementById("levelsList");
 const logEl = document.getElementById("log");
 const frameEl = document.getElementById("playerFrame");
-const svgFrameEl = document.getElementById("svgFrame");
+const playModeBtn = document.getElementById("playModeBtn");
+const svgModeBtn = document.getElementById("svgModeBtn");
 
-let latestPlayUrl = "http://127.0.0.1:8080";
-let latestSvgUrl = "http://127.0.0.1:8080";
+let latestPlayUrl = "";
+let latestSvgUrl = "";
 let latestLevelId = null;
+let previewMode = "play";
 
 function api() {
   if (!window.baronApp) {
@@ -32,6 +34,35 @@ function requireApiMethod(name) {
 function setLog(text) {
   logEl.textContent = text;
   logEl.scrollTop = logEl.scrollHeight;
+}
+
+function setPreviewMode(mode) {
+  previewMode = mode;
+  playModeBtn.classList.toggle("active", mode === "play");
+  svgModeBtn.classList.toggle("active", mode === "svg");
+  renderPreview();
+}
+
+function renderPreview() {
+  if (!latestLevelId) {
+    frameEl.removeAttribute("src");
+    frameEl.srcdoc = emptyPreviewHtml();
+    return;
+  }
+
+  frameEl.removeAttribute("srcdoc");
+  frameEl.src = previewMode === "svg" ? latestSvgUrl : latestPlayUrl;
+}
+
+function emptyPreviewHtml() {
+  return `
+    <!doctype html>
+    <html>
+      <body style="margin:0;display:grid;place-items:center;height:100vh;background:#1b2a37;color:#dbe7f3;font-family:Segoe UI,Tahoma,Verdana,sans-serif;">
+        <div style="font-size:14px;">No level selected</div>
+      </body>
+    </html>
+  `;
 }
 
 async function loadInitial() {
@@ -85,8 +116,7 @@ function selectLevel(levelId) {
   latestLevelId = levelId;
   latestPlayUrl = `http://127.0.0.1:8080/levels/${levelId}/play`;
   latestSvgUrl = `http://127.0.0.1:8080/levels/${levelId}/svg`;
-  frameEl.src = latestPlayUrl;
-  svgFrameEl.src = latestSvgUrl;
+  renderPreview();
   levelStatusEl.textContent = levelId;
   void refreshLevels();
 }
@@ -138,8 +168,7 @@ generateBtn.addEventListener("click", () => {
 });
 
 refreshBtn.addEventListener("click", () => {
-  frameEl.src = latestPlayUrl;
-  svgFrameEl.src = latestSvgUrl;
+  renderPreview();
   void refreshServerStatus();
   void refreshLevels();
 });
@@ -148,7 +177,16 @@ startServerBtn.addEventListener("click", () => {
   void startServer();
 });
 
+playModeBtn.addEventListener("click", () => {
+  setPreviewMode("play");
+});
+
+svgModeBtn.addEventListener("click", () => {
+  setPreviewMode("svg");
+});
+
 void loadInitial();
+renderPreview();
 
 function escapeHtml(value) {
   return value
